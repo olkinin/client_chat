@@ -19,6 +19,8 @@ public class ChatApplication extends Application {
         loader.setLocation(getClass().getResource("/mainChat.fxml"));
         Parent parent = loader.load();
         Scene scene = new Scene(parent);
+//        Label label = new Label();
+//     parent.getChildren().add(label);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
