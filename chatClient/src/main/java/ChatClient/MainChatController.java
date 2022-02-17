@@ -1,8 +1,8 @@
 package ChatClient;
 
-import com.sun.org.apache.xpath.internal.operations.String;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import ChatClient.netWork.MessageProcessor;
+import ChatClient.netWork.NetworkService;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -10,26 +10,60 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 
-public class MainChatController implements Initializable {
+public class MainChatController implements Initializable, MessageProcessor {
+    public static final String REGEX = "%!%";
+    public VBox authLoginPanel;
+    public TextField authLoginField;
+    public PasswordField authPasswordField;
+    public TextField authNick;
+
+
+    private String nick;
+    private NetworkService networkService;
 
     @FXML
-    public VBox mainChatPanel;
-    @FXML
-    public TextArea mainChatArea;
+    private VBox changeNickPanel;
 
     @FXML
-    public ListView contactList;
-    @FXML
-    public TextField inputField;
-    @FXML
-    public Button btnSend;
-    public Label label;
+    private TextField newNickField;
 
+    @FXML
+    private VBox changePasswordPanel;
+
+    @FXML
+    private PasswordField oldPassField;
+
+    @FXML
+    private PasswordField newPasswordField;
+
+    @FXML
+    private VBox loginPanel;
+
+    @FXML
+    private TextField loginField;
+
+    @FXML
+    private PasswordField passwordField;
+
+    @FXML
+    private VBox mainChatPanel;
+
+    @FXML
+    private TextArea mainChatArea;
+
+    @FXML
+    private ListView contactList;
+
+    @FXML
+    private TextField inputField;
+
+    @FXML
+    private Button btnSend;
 
     public void connectToServer(ActionEvent actionEvent) {
     }
@@ -50,50 +84,144 @@ public class MainChatController implements Initializable {
     public void showAbout(ActionEvent actionEvent) {
     }
 
-
     public void sendMessage(ActionEvent actionEvent) {
-        java.lang.String massage = inputField.getText();
-
-        if (massage.isEmpty()) {
+        String message = inputField.getText();
+        if (message.isEmpty()) {
             return;
         }
-
-       clickMouseContacts();
-        mainChatArea.appendText(massage + System.lineSeparator());
+        String recipient = (String) contactList.getSelectionModel().getSelectedItem();
+        if (!recipient.equals("ALL")) {
+            networkService.sendMessage("/w" + REGEX + recipient + REGEX + message);
+        } else {
+            networkService.sendMessage("/broadcast" + REGEX + message);
+        }
         inputField.clear();
-
     }
-/* Такое решение с объяснениями я нашла в книге Шилдта. Но не получилось напечатать именно выбранный контакт
-* и get.Children() тоже идея не дала мне ввести. Насколько я поняла, он не мой label видит,
-* а только ссылку на созданны  объект. А как исправить ситуацию?*/
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        List contacts = new ArrayList<String>();
-        for (int i = 0; i < 10; i++) {
-            contacts.add("Contact#" + (i + 1));
-        }
-        contactList.setItems(FXCollections.observableList(contacts));
+        this.networkService = new NetworkService(this);
     }
 
-    public void clickMouseContacts() {
-        Label label=new Label();
-        mainChatArea.appendText(java.lang.String.valueOf(label));
-        MultipleSelectionModel<java.lang.String> lv = contactList.getSelectionModel();
-        lv.selectedItemProperty().addListener(new ChangeListener<java.lang.String>() {
-            @Override
-            public void changed(ObservableValue<? extends java.lang.String>
-                                        observable, java.lang.String oldValue,
-                                java.lang.String newValue) {
-                if (newValue != null) {
-                    label.setText("< " + newValue + " >: ");
+    @Override
+    public void processMessage(String message) {
+        Platform.runLater(() -> parseIncomingMessage(message));
+    }
 
-                } else {
-                    label.setText("All: ");
+    private void parseIncomingMessage(String message) {
+        String[] splitMessage = message.split(REGEX);
+        switch (splitMessage[0]) {
+            case "/auth_ok":
+                this.nick = splitMessage[1];
+                loginPanel.setVisible(false);
+                mainChatPanel.setVisible(true);
+                break;
+            case "/error":
+                showError(splitMessage[1]);
+                System.out.println("got error " + splitMessage[1]);
+                break;
+            case "/list":
+                ArrayList<String> contacts = new ArrayList<String>();
+                contacts.add("ALL");
+                for (int i = 1; i < splitMessage.length; i++) {
+                    contacts.add(splitMessage[i]);
                 }
-            }
-
-        });
+                contactList.setItems(FXCollections.observableList(contacts));
+                contactList.getSelectionModel().selectFirst();
+                break;
+            case "/change_pass_ok":
+                changePasswordPanel.setVisible(false);
+                mainChatPanel.setVisible(true);
+                break;
+            default:
+                mainChatArea.appendText(splitMessage[0] + System.lineSeparator());
+                break;
+        }
     }
 
+    public void sendChangeNick(ActionEvent actionEvent) {
+        if (newNickField.getText().isEmpty()) return;
+        networkService.sendMessage("/change_nick" + REGEX + newNickField.getText());
+    }
+
+    public void sendChangePass(ActionEvent actionEvent) {
+        if (newPasswordField.getText().isEmpty() || oldPassField.getText().isEmpty()) return;
+        networkService.sendMessage("/change_pass" + REGEX + oldPassField.getText() + REGEX + newPasswordField.getText());
+    }
+
+    public void sendEternalLogout(ActionEvent actionEvent) {
+        networkService.sendMessage("/remove");
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR,
+                "An error occured: " + message,
+                ButtonType.OK);
+        alert.showAndWait();
+    }
+
+    public void sendAuth(ActionEvent actionEvent) {
+        String login = loginField.getText();
+        String password = passwordField.getText();
+
+        if (login.isEmpty() || password.isEmpty()) {
+            return;
+        }
+
+        String message = "/auth" + REGEX + login + REGEX + password;
+
+        if (!networkService.isConnected()) {
+            try {
+                networkService.connect();
+            } catch (IOException e) {
+                e.printStackTrace();
+                showError(e.getMessage());
+
+            }
+        }
+
+        networkService.sendMessage(message);
+    }
+
+    public void returnToChat(ActionEvent actionEvent) {
+        changeNickPanel.setVisible(false);
+        changePasswordPanel.setVisible(false);
+        mainChatPanel.setVisible(true);
+    }
+
+    public void showChangeNick(ActionEvent actionEvent) {
+        mainChatPanel.setVisible(false);
+        changeNickPanel.setVisible(true);
+    }
+
+    public void showChangePass(ActionEvent actionEvent) {
+        mainChatPanel.setVisible(false);
+        changePasswordPanel.setVisible(true);
+    }
+
+
+//    public void authSendAuth(ActionEvent actionEvent) {
+//        String login = authLoginField.getText();
+//        String password = authPasswordField.getText();
+//        String nick = authNick.getText();
+//
+//        if (login.isEmpty() || password.isEmpty()) {
+//            return;
+//        }
+//
+//        String message = "/auth" + REGEX + login + REGEX + password+REGEX+nick;
+//
+//        if (!networkService.isConnected()) {
+//            try {
+//                networkService.connect();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                showError(e.getMessage());
+//
+//            }
+//        }
+//
+//        networkService.sendMessage(message);
+//    }
 }
+
