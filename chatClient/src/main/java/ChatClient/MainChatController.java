@@ -138,7 +138,7 @@ public class MainChatController implements Initializable, MessageProcessor {
             default:
                 mainChatArea.appendText(splitMessage[0] + System.lineSeparator());
                 try (
-                      //FileOutputStream fo = new FileOutputStream("saveMessage/" + this.nick + ".txt");
+
                         FileWriter fr = new FileWriter("saveMessage/" + this.nick + ".txt", true)){
                 {fr.write(splitMessage[0]+"\n");
                   break;
