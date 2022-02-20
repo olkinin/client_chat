@@ -4,11 +4,10 @@ import chat_client_server.error.WrongCredentialsExeption;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class ClientHandler {
     private Socket socket;
@@ -17,8 +16,7 @@ public class ClientHandler {
     private Thread handlerThread;
     private Server server;
     private String user;
-    TimerTask timerTask;
-    Timer timer = new Timer();
+    File file;
 
     public ClientHandler(Socket socket, Server server) {
         try {
@@ -87,7 +85,7 @@ public class ClientHandler {
     private void authorize() {
         System.out.println("Authorizing");
 
-          while (true) {
+        while (true) {
             try {
                 String message = in.readUTF();
                 if (message.startsWith("/auth")) {
@@ -97,6 +95,14 @@ public class ClientHandler {
                     try {
                         try {
                             nickname = server.getAuthService().authorizeUserByLoginAndPassword(parsedAuthMessage[1], parsedAuthMessage[2]);
+                            file = new File("saveMessage/"+ nickname +".txt");
+                            if(!file.exists()){
+                                try {
+                                    file.createNewFile();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
@@ -128,7 +134,7 @@ public class ClientHandler {
     public void send(String msg) {
         try {
             out.writeUTF(msg);
-        } catch (IOException e) {
+                  } catch (IOException e) {
             e.printStackTrace();
         }
     }

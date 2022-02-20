@@ -9,7 +9,7 @@ public class InMemoryAuthService implements AuthService {
     private static PreparedStatement ps;
 
     String nick = null;
-   // private List<User> users;
+    // private List<User> users;
 
 
 //            start();
@@ -106,14 +106,14 @@ public class InMemoryAuthService implements AuthService {
             e.printStackTrace();
         }
         while (rs.next()) {String a=rs.getString("login");
-        String b = rs.getString("password");
-        if(a.equals(login)&&b.equals(password))
-            try {
-                nick = rs.getString("nick");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            String b = rs.getString("password");
+            if(a.equals(login)&&b.equals(password))
+                try {
+                    nick = rs.getString("nick");
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
+        }
         return nick;
     }
 
@@ -154,4 +154,3 @@ public class InMemoryAuthService implements AuthService {
 
     }
 }
-

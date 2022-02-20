@@ -10,6 +10,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.ResourceBundle;
 
 public class MainChatController implements Initializable, MessageProcessor {
     public static final String REGEX = "%!%";
+
     public VBox authLoginPanel;
     public TextField authLoginField;
     public PasswordField authPasswordField;
@@ -135,9 +137,18 @@ public class MainChatController implements Initializable, MessageProcessor {
                 break;
             default:
                 mainChatArea.appendText(splitMessage[0] + System.lineSeparator());
-                break;
+                try (
+                      //FileOutputStream fo = new FileOutputStream("saveMessage/" + this.nick + ".txt");
+                        FileWriter fr = new FileWriter("saveMessage/" + this.nick + ".txt", true)){
+                {fr.write(splitMessage[0]+"\n");
+                  break;
+                }} catch (IOException e) {
+                    e.printStackTrace();
+                }
+
         }
-    }
+
+}
 
     public void sendChangeNick(ActionEvent actionEvent) {
         if (newNickField.getText().isEmpty()) return;
