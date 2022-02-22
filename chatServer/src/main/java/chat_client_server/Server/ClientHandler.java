@@ -2,12 +2,11 @@ package chat_client_server.Server;
 
 import chat_client_server.error.WrongCredentialsExeption;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientHandler {
     private Socket socket;
@@ -17,6 +16,7 @@ public class ClientHandler {
     private Server server;
     private String user;
     File file;
+    ExecutorService executorService = Executors.newCachedThreadPool();
 
     public ClientHandler(Socket socket, Server server) {
         try {
@@ -31,8 +31,10 @@ public class ClientHandler {
     }
 
     public void handle() {
-        handlerThread = new Thread(() -> {
+        executorService.execute(()->{
+        //handlerThread = new Thread(() -> {
             authorize();
+            System.out.println(Thread.currentThread().getName());
             while (!Thread.currentThread().isInterrupted() && !socket.isClosed()) {
                 try {
                     String message = in.readUTF();
@@ -43,7 +45,7 @@ public class ClientHandler {
                 }
             }
         });
-        handlerThread.start();
+       // handlerThread.start();
 
     }
 
@@ -95,14 +97,21 @@ public class ClientHandler {
                     try {
                         try {
                             nickname = server.getAuthService().authorizeUserByLoginAndPassword(parsedAuthMessage[1], parsedAuthMessage[2]);
-                            file = new File("saveMessage/"+ nickname +".txt");
-                            if(!file.exists()){
+                            file = new File("saveMessage/" + nickname + ".txt");
+                            if (!file.exists()) {
                                 try {
                                     file.createNewFile();
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
+                            } else {
+                                try (FileInputStream fis = new FileInputStream("saveMessage/" + nickname + ".txt")) {
+                                    int x;
+                                    while ((x = fis.read()) > -1) {
+                                    }
+                                }
                             }
+
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
@@ -134,7 +143,7 @@ public class ClientHandler {
     public void send(String msg) {
         try {
             out.writeUTF(msg);
-                  } catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

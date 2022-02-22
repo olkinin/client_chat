@@ -115,6 +115,8 @@ public class MainChatController implements Initializable, MessageProcessor {
         switch (splitMessage[0]) {
             case "/auth_ok":
                 this.nick = splitMessage[1];
+
+
                 loginPanel.setVisible(false);
                 mainChatPanel.setVisible(true);
                 break;
@@ -137,9 +139,7 @@ public class MainChatController implements Initializable, MessageProcessor {
                 break;
             default:
                 mainChatArea.appendText(splitMessage[0] + System.lineSeparator());
-                try (
-
-                        FileWriter fr = new FileWriter("saveMessage/" + this.nick + ".txt", true)){
+                try (FileWriter fr = new FileWriter("saveMessage/" + this.nick + ".txt", true)){
                 {fr.write(splitMessage[0]+"\n");
                   break;
                 }} catch (IOException e) {
