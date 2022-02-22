@@ -6,15 +6,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Server {
     public static final String REGEX = "%!%";
     private final int port = 8189;
     private final AuthService authService;
     private final ArrayList<ClientHandler> clientHandlers;
-    ExecutorService executorService = Executors.newCachedThreadPool();
     public Server(AuthService authService) {
 
         this.clientHandlers = new ArrayList<>();
@@ -32,7 +29,6 @@ public class Server {
                 System.out.println("Client connected");
                 ClientHandler clientHandler = new ClientHandler(socket, this);
                 clientHandler.handle();
-
             }
         } catch (IOException e) {
             e.printStackTrace();

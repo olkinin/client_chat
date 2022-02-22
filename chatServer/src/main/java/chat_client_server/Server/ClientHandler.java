@@ -31,8 +31,7 @@ public class ClientHandler {
     }
 
     public void handle() {
-        executorService.execute(()->{
-        //handlerThread = new Thread(() -> {
+        executorService.execute(() -> {
             authorize();
             System.out.println(Thread.currentThread().getName());
             while (!Thread.currentThread().isInterrupted() && !socket.isClosed()) {
@@ -45,7 +44,7 @@ public class ClientHandler {
                 }
             }
         });
-       // handlerThread.start();
+
 
     }
 
