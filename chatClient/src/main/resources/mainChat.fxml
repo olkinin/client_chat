@@ -12,8 +12,24 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="ChatClient.MainChatController"
             prefHeight="400.0" prefWidth="600.0">
+       <!--<VBox  fx:id="authLoginPanel">-->
+    <!--<Label text  = "Login: "/>-->
+    <!--<TextField fx:id="authLoginField"/>-->
+    <!--<Label text = "authPassvordField"/>-->
+    <!--<PasswordField fx:id="authPasswordField"/>-->
+    <!--<Label text  = "Nick: "/>-->
+    <!--<TextField fx:id="authNick"/>-->
+    <!--<Button text="authConnect" onAction="#authSendAuth"/>-->
+    <!--</VBox>-->
 
-    <VBox fx:id="mainChatPanel">
+<VBox fx:id="loginPanel">
+    <Label text  = "Login: "/>
+    <TextField fx:id="loginField"/>
+    <Label text = "PassvordField"/>
+    <PasswordField fx:id="passwordField"/>
+    <Button text="connect" onAction="#sendAuth"/>
+</VBox>
+    <VBox fx:id="mainChatPanel" visible = "false">
         <MenuBar>
             <Menu text="File">
                 <MenuItem text="Connect" onAction="#connectToServer"/>
@@ -65,6 +81,7 @@
                 <HBox.margin>
                     <Insets left="5.0" right="5.0"/>
                 </HBox.margin>
+
             </TextField>
             <Button fx:id="btnSend" minWidth="125.0" text="SEND" prefHeight="70.0" onAction="#sendMessage">
                 <HBox.margin>
